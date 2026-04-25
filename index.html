@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HealthSensex AI — National Health Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans:wght@300;400;500;600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#060D1F;--navy2:#0B1730;--navy3:#0f2040;
+  --blue:#1565C0;--blue2:#1976D2;--blue-light:#42A5F5;
+  --teal:#00695C;--teal2:#00897B;--teal-light:#4DB6AC;
+  --red:#D32F2F;--red2:#EF5350;--amber:#F57C00;--amber2:#FFB300;
+  --green:#2E7D32;--green2:#43A047;
+  --white:#FFFFFF;--off:#F4F7FB;--muted:#B0BEC5;--dark-muted:#546E7A;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'Noto Sans',sans-serif;
+  --display:'Rajdhani',sans-serif;
+  --pop:'Poppins',sans-serif;
+}
+
+body{background:var(--navy);color:var(--white);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column}
+html{scroll-behavior:smooth}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;top:0;left:0;width:220px;height:100vh;
+  background:linear-gradient(180deg,#040b18 0%,#080f20 100%);
+  border-right:1px solid rgba(21,101,192,0.25);
+  display:flex;flex-direction:column;z-index:100;
+  padding:0 0 24px 0;
+}
+.sb-logo{
+  padding:24px 20px 20px;border-bottom:1px solid rgba(21,101,192,0.2);
+  font-family:var(--display);font-size:1.3rem;font-weight:700;
+  color:var(--white);letter-spacing:.04em;display:flex;align-items:center;gap:10px;
+}
+.sb-logo span{font-size:1.6rem}
+.sb-logo small{display:block;font-family:var(--sans);font-size:.58rem;
+  font-weight:400;color:var(--dark-muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.sb-nav{flex:1;padding:20px 12px}
+.sb-nav a{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:10px;margin-bottom:6px;
+  font-family:var(--display);font-size:.9rem;font-weight:600;letter-spacing:.05em;
+  color:var(--dark-muted);text-decoration:none;cursor:pointer;
+  transition:all .2s;border:1px solid transparent;
+}
+.sb-nav a:hover{background:rgba(21,101,192,.1);color:var(--muted)}
+.sb-nav a.active{background:rgba(21,101,192,.18);color:var(--blue-light);border-color:rgba(21,101,192,.3)}
+.sb-nav a .icon{font-size:1.1rem;width:22px;text-align:center}
+.sb-live{
+  margin:0 12px;padding:10px 14px;
+  background:#0a1a0a;border:1px solid rgba(67,160,71,.3);border-radius:8px;
+  font-family:var(--mono);font-size:.65rem;color:#66BB6A;
+  display:flex;align-items:center;gap:8px;
+}
+.sb-live::before{content:'●';animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── MAIN CONTENT ── */
+#main{margin-left:220px;min-height:100vh}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PAGE HEADERS ── */
+.page-header{
+  background:linear-gradient(135deg,var(--navy2) 0%,var(--navy3) 100%);
+  border-bottom:1px solid rgba(21,101,192,.2);
+  padding:28px 36px 24px;
+}
+.page-header h1{font-family:var(--display);font-size:1.8rem;font-weight:700;letter-spacing:.04em}
+.page-header p{font-size:.8rem;color:var(--muted);margin-top:4px}
+
+/* ── CARDS & GRIDS ── */
+.content-area{padding:28px 36px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.kpi-card{
+  background:linear-gradient(135deg,#0d1e38 0%,#0a1628 100%);
+  border:1px solid rgba(21,101,192,.25);border-radius:14px;
+  padding:20px 22px;position:relative;overflow:hidden;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;right:0;width:60px;height:60px;
+  border-radius:50%;background:rgba(21,101,192,.06);transform:translate(20px,-20px);
+}
+.kpi-label{font-family:var(--display);font-size:.7rem;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--dark-muted);margin-bottom:8px}
+.kpi-value{font-family:var(--mono);font-size:2rem;font-weight:600;line-height:1}
+.kpi-sub{font-size:.72rem;color:var(--muted);margin-top:6px}
+.kpi-card.danger .kpi-value{color:var(--red2)}
+.kpi-card.warn .kpi-value{color:var(--amber2)}
+.kpi-card.good .kpi-value{color:#66BB6A}
+
+.card{
+  background:linear-gradient(135deg,#0d1e38 0%,#0a1628 100%);
+  border:1px solid rgba(21,101,192,.2);border-radius:14px;
+  padding:22px 24px;margin-bottom:22px;
+}
+.card-title{font-family:var(--display);font-size:1rem;font-weight:600;
+  letter-spacing:.06em;color:var(--blue-light);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:22px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:22px}
+
+/* ── TABLES ── */
+.data-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.data-table th{
+  font-family:var(--display);font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dark-muted);
+  padding:10px 14px;text-align:left;border-bottom:1px solid rgba(21,101,192,.2);
+  cursor:pointer;user-select:none;
+}
+.data-table th:hover{color:var(--blue-light)}
+.data-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.data-table tr:hover td{background:rgba(21,101,192,.06)}
+.data-table tr.high-risk td{background:rgba(211,47,47,.07)}
+.data-table tr.med-risk td{background:rgba(245,124,0,.05)}
+.score-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);position:relative;width:80px;display:inline-block;vertical-align:middle;margin-right:6px}
+.score-bar-fill{height:100%;border-radius:3px;position:absolute;top:0;left:0}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:600;letter-spacing:.05em}
+.badge-red{background:rgba(211,47,47,.2);color:#EF9A9A;border:1px solid rgba(211,47,47,.3)}
+.badge-amber{background:rgba(245,124,0,.2);color:#FFCC80;border:1px solid rgba(245,124,0,.3)}
+.badge-green{background:rgba(46,125,50,.2);color:#A5D6A7;border:1px solid rgba(46,125,50,.3)}
+.badge-blue{background:rgba(21,101,192,.2);color:#90CAF9;border:1px solid rgba(21,101,192,.3)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;
+  border:none;cursor:pointer;font-family:var(--sans);font-size:.8rem;font-weight:600;
+  transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--blue);color:var(--white)}
+.btn-primary:hover{background:var(--blue2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(21,101,192,.4)}
+.btn-danger{background:rgba(211,47,47,.15);color:#EF9A9A;border:1px solid rgba(211,47,47,.3)}
+.btn-danger:hover{background:rgba(211,47,47,.25)}
+.btn-sm{padding:5px 12px;font-size:.72rem}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,.1)}
+.btn-ghost:hover{border-color:rgba(21,101,192,.5);color:var(--blue-light)}
+
+/* ── ALERT BANNER ── */
+.alert-banner{
+  background:linear-gradient(90deg,#1a0505,#2d0a0a);
+  border-left:4px solid var(--red);border-radius:8px;
+  padding:12px 18px;margin-bottom:20px;
+  font-family:var(--mono);font-size:.78rem;color:#EF9A9A;
+  display:flex;align-items:center;gap:12px;
+  animation:pulse-border 2s infinite;
+}
+@keyframes pulse-border{0%,100%{border-left-color:var(--red)}50%{border-left-color:#ff6666}}
+
+/* ── GAUGE ── */
+.gauge-wrap{text-align:center;padding:10px 0}
+#gaugeCanvas{display:block;margin:0 auto}
+.gauge-score{font-family:var(--mono);font-size:3.2rem;font-weight:600;line-height:1;margin-top:4px}
+.gauge-label{font-family:var(--display);font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--dark-muted);margin-top:6px}
+.gauge-status{font-family:var(--display);font-size:.85rem;font-weight:600;letter-spacing:.1em;margin-top:6px}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#0d1e38;border:1px solid rgba(21,101,192,.35);border-radius:16px;
+  width:700px;max-height:85vh;overflow-y:auto;padding:28px;position:relative}
+.modal-close{position:absolute;top:16px;right:18px;background:none;border:none;
+  color:var(--muted);font-size:1.4rem;cursor:pointer}
+.modal-close:hover{color:var(--white)}
+
+/* ── PAGINATION ── */
+.pagination{display:flex;gap:8px;align-items:center;margin-top:16px;justify-content:flex-end}
+.pagination button{background:rgba(21,101,192,.12);border:1px solid rgba(21,101,192,.2);
+  color:var(--muted);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:.78rem;transition:all .2s}
+.pagination button:hover{background:rgba(21,101,192,.25);color:var(--white)}
+.pagination button.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
+.pagination button:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── FILTERS ── */
+.filter-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.filter-row select,.filter-row input{
+  background:#0a1628;border:1px solid rgba(21,101,192,.25);border-radius:8px;
+  color:var(--muted);padding:8px 12px;font-size:.78rem;font-family:var(--sans);
+}
+.filter-row select:focus,.filter-row input:focus{outline:none;border-color:var(--blue)}
+
+/* ── TOAST ── */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:300;display:flex;flex-direction:column;gap:10px}
+.toast{
+  background:#0d2040;border:1px solid rgba(21,101,192,.4);border-radius:10px;
+  padding:14px 20px;font-size:.82rem;min-width:300px;max-width:420px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  animation:slideIn .3s ease;display:flex;align-items:flex-start;gap:12px;
+}
+.toast.success{border-color:rgba(46,125,50,.5)}
+.toast.danger{border-color:rgba(211,47,47,.5)}
+.toast-icon{font-size:1.1rem;margin-top:1px}
+.toast-title{font-weight:600;margin-bottom:2px}
+.toast-body{color:var(--muted);font-size:.76rem}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+
+/* ─────────── PAGE 1: ABHA FORM ─────────── */
+#page-abha .content-area{max-width:860px}
+.form-section{margin-bottom:28px}
+.form-section-title{
+  font-family:var(--display);font-size:.85rem;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--blue-light);margin-bottom:16px;
+  padding-bottom:8px;border-bottom:1px solid rgba(21,101,192,.2);
+  display:flex;align-items:center;gap:8px;
+}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:.75rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--dark-muted)}
+.form-group input,.form-group select,.form-group textarea{
+  background:#0a1628;border:1px solid rgba(21,101,192,.2);border-radius:9px;
+  color:var(--white);padding:11px 14px;font-size:.85rem;font-family:var(--sans);
+  transition:all .2s;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+  outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,101,192,.15);
+}
+.form-group input.valid{border-color:var(--green2)}
+.form-group input.invalid{border-color:var(--red2)}
+.field-hint{font-size:.7rem;color:var(--dark-muted)}
+.field-valid{font-size:.7rem;color:var(--green2)}
+.field-error{font-size:.7rem;color:var(--red2)}
+
+/* Risk pre-check meter */
+.risk-meter{
+  background:#06090f;border:1px solid rgba(21,101,192,.15);border-radius:12px;
+  padding:18px 22px;margin-top:20px;
+}
+.risk-meter-title{font-family:var(--display);font-size:.8rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--dark-muted);margin-bottom:14px}
+.risk-bar-wrap{height:8px;background:rgba(255,255,255,.07);border-radius:4px;margin-bottom:10px;overflow:hidden}
+.risk-bar-fill{height:100%;border-radius:4px;transition:all .5s ease}
+.risk-level{font-family:var(--mono);font-size:1rem;font-weight:600}
+.risk-detail{font-size:.75rem;color:var(--muted);margin-top:4px}
+
+/* Procedure tags */
+.procedure-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.procedure-tag{
+  padding:6px 12px;border-radius:20px;font-size:.74rem;cursor:pointer;
+  border:1px solid rgba(21,101,192,.25);color:var(--muted);background:transparent;
+  transition:all .2s;user-select:none;
+}
+.procedure-tag.selected{background:rgba(21,101,192,.25);color:var(--blue-light);border-color:rgba(21,101,192,.5)}
+
+/* Upload area */
+.upload-area{
+  border:1.5px dashed rgba(21,101,192,.3);border-radius:10px;
+  padding:24px;text-align:center;cursor:pointer;transition:all .2s;
+}
+.upload-area:hover{border-color:var(--blue);background:rgba(21,101,192,.06)}
+.upload-area p{font-size:.8rem;color:var(--muted);margin-top:8px}
+
+/* ─────────── PAGE 2: FRAUD DASHBOARD ─────────── */
+#login-overlay{
+  position:fixed;inset:0;background:rgba(4,8,16,.95);z-index:150;
+  display:flex;align-items:center;justify-content:center;
+}
+.login-box{
+  background:linear-gradient(135deg,#0d1e38,#0a1628);
+  border:1px solid rgba(21,101,192,.35);border-radius:20px;
+  padding:40px;width:400px;text-align:center;
+}
+.login-box h2{font-family:var(--display);font-size:1.4rem;font-weight:700;
+  letter-spacing:.06em;margin-bottom:6px}
+.login-box p{font-size:.75rem;color:var(--dark-muted);margin-bottom:28px}
+.login-box input{
+  width:100%;background:#060d1f;border:1px solid rgba(21,101,192,.25);
+  border-radius:9px;color:var(--white);padding:12px 16px;font-size:.85rem;
+  font-family:var(--sans);margin-bottom:12px;
+}
+.login-box input:focus{outline:none;border-color:var(--blue)}
+.login-error{color:var(--red2);font-size:.75rem;margin-bottom:10px;display:none}
+
+/* ─────────── PAGE 3: PUBLIC SENSEX ─────────── */
+#page-public{background:var(--navy)}
+.public-hero{
+  background:linear-gradient(135deg,#04111f 0%,#082030 50%,#04111f 100%);
+  border-bottom:1px solid rgba(0,105,92,.25);
+  padding:40px 36px 32px;
+}
+.public-hero h1{font-family:var(--pop);font-size:2rem;font-weight:700;color:var(--white)}
+.public-hero p{color:var(--muted);font-size:.85rem;margin-top:6px;max-width:600px}
+
+.big-score{font-family:var(--mono);font-size:5.5rem;font-weight:600;line-height:1}
+.score-ring{display:inline-block;padding:4px;position:relative}
+
+.disease-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.disease-card{
+  background:linear-gradient(135deg,#0a1e28,#091626);
+  border:1px solid rgba(0,105,92,.2);border-radius:14px;
+  padding:18px 20px;
+}
+.disease-card .d-name{font-family:var(--pop);font-size:.85rem;font-weight:600;margin-bottom:4px}
+.disease-card .d-status{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.disease-card .d-detail{font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.5}
+.disease-card .d-trend{font-family:var(--mono);font-size:.8rem;margin-top:8px}
+
+.outbreak-panel{
+  border-left:3px solid var(--amber);border-radius:10px;
+  background:linear-gradient(135deg,#1c0e00,#1a1000);
+  padding:18px 20px;margin-bottom:14px;
+}
+.outbreak-panel.critical{border-color:var(--red2);background:linear-gradient(135deg,#1a0505,#180808)}
+.outbreak-panel .o-head{font-family:var(--pop);font-size:.9rem;font-weight:600;margin-bottom:6px}
+.outbreak-panel .o-meta{font-size:.72rem;color:var(--muted);margin-bottom:10px}
+.outbreak-panel .o-public{font-size:.78rem;line-height:1.6;margin-bottom:10px}
+.outbreak-panel .o-gov{
+  background:rgba(211,47,47,.1);border:1px solid rgba(211,47,47,.2);border-radius:8px;
+  padding:10px 14px;font-size:.75rem;color:#FFCDD2;line-height:1.6;
+}
+
+.state-table tr td:last-child{font-family:var(--mono);font-weight:600}
+
+/* Responsive chart containers */
+.chart-wrap{position:relative;height:240px}
+.chart-wrap-tall{position:relative;height:300px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <span>🏥</span>
+    <div>HealthSensex AI<small>National Health Intelligence</small></div>
+  </div>
+  <div class="sb-nav">
+    <a class="active" onclick="showPage('abha')" id="nav-abha">
+      <span class="icon">📋</span>ABHA Portal
+    </a>
+    <a onclick="showPage('fraud')" id="nav-fraud">
+      <span class="icon">🔍</span>Fraud Monitor
+    </a>
+    <a onclick="showPage('public')" id="nav-public">
+      <span class="icon">📊</span>HealthSensex
+    </a>
+  </div>
+  <div class="sb-live">LIVE MONITOR ACTIVE</div>
+</nav>
+
+<!-- MAIN PAGES -->
+<div id="main">
+
+<!-- ═══════════ PAGE 1: ABHA PORTAL ═══════════ -->
+<div class="page active" id="page-abha">
+  <div class="page-header">
+    <h1>📋 ABHA Data Entry Portal</h1>
+    <p>Ayushman Bharat Health Account · Hospital Record Submission System · Ministry of Health & Family Welfare</p>
+  </div>
+  <div class="content-area">
+
+    <div class="card">
+      <div class="form-section">
+        <div class="form-section-title">🪪 Patient & ABHA Identification</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>ABHA ID *</label>
+            <input type="text" id="f-abha" placeholder="XX-XXXX-XXXX-XXXX" maxlength="19" oninput="validateABHA(this)"/>
+            <span class="field-hint" id="abha-hint">Enter 14-digit ABHA number</span>
+          </div>
+          <div class="form-group">
+            <label>Hospital Registration No. *</label>
+            <select id="f-hospital">
+              <option value="">— Select Hospital —</option>
+              <option value="HOSP-001">HOSP-001 · AIIMS Delhi</option>
+              <option value="HOSP-002">HOSP-002 · Safdarjung Hospital</option>
+              <option value="HOSP-003">HOSP-003 · RML Hospital</option>
+              <option value="HOSP-004">HOSP-004 · Lok Nayak Hospital</option>
+              <option value="HOSP-005">HOSP-005 · GTB Hospital</option>
+              <option value="HOSP-006">HOSP-006 · VMMC Safdarjung</option>
+              <option value="HOSP-007">HOSP-007 · KEM Mumbai</option>
+              <option value="HOSP-008">HOSP-008 · Nair Hospital Mumbai</option>
+              <option value="HOSP-009">HOSP-009 · NIMHANS Bangalore</option>
+              <option value="HOSP-010">HOSP-010 · JIPMER Puducherry</option>
+              <option value="HOSP-011">HOSP-011 · PGI Chandigarh</option>
+              <option value="HOSP-012">HOSP-012 · SGPGI Lucknow</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Patient Name *</label>
+            <input type="text" id="f-patient" placeholder="Full name as per Aadhaar"/>
+          </div>
+          <div class="form-group">
+            <label>Doctor ID (NMC Reg.) *</label>
+            <input type="text" id="f-doctor" placeholder="DR-XXXX" oninput="formatDoctorId(this)"/>
+          </div>
+          <div class="form-group">
+            <label>Age</label>
+            <input type="number" id="f-age" placeholder="Years" min="0" max="120"/>
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select id="f-gender">
+              <option value="">— Select —</option>
+              <option>Male</option><option>Female</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">🏥 Clinical Details</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Primary Diagnosis *</label>
+            <select id="f-disease" onchange="onDiseaseChange()">
+              <option value="">— Select Diagnosis —</option>
+              <option>Dengue</option><option>Tuberculosis</option><option>Malaria</option>
+              <option>Typhoid</option><option>COVID-19</option><option>Cardiac</option>
+              <option>Orthopedic</option><option>Cancer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ICD-10 Code</label>
+            <input type="text" id="f-icd" placeholder="Auto-filled on diagnosis select"/>
+          </div>
+          <div class="form-group">
+            <label>Date of Admission</label>
+            <input type="date" id="f-admit"/>
+          </div>
+          <div class="form-group">
+            <label>Date of Discharge</label>
+            <input type="date" id="f-discharge"/>
+          </div>
+          <div class="form-group">
+            <label>Death Certificates Issued</label>
+            <input type="number" id="f-dc" placeholder="0" min="0" max="50" value="0" oninput="updatePrecheck()"/>
+          </div>
+          <div class="form-group">
+            <label>Billing Amount (₹) *</label>
+            <input type="number" id="f-billing" placeholder="e.g. 45000" min="0" oninput="updatePrecheck()"/>
+          </div>
+          <div class="form-group full">
+            <label>Procedures Performed</label>
+            <div class="procedure-tags">
+              <span class="procedure-tag" onclick="toggleProc(this)">Consultation</span>
+              <span class="procedure-tag" onclick="toggleProc(this)">Surgery</span>
+              <span class="procedure-tag" onclick="toggleProc(this)">ICU / Critical Care</span>
+              <span class="procedure-tag" onclick="toggleProc(this)">Lab Tests</span>
+              <span class="procedure-tag" onclick="toggleProc(this)">Imaging / Radiology</span>
+              <span class="procedure-tag" onclick="toggleProc(this)">Pharmacy</span>
+              <span class="procedure-tag" onclick="toggleProc(this)">Physiotherapy</span>
+              <span class="procedure-tag" onclick="toggleProc(this)">Emergency</span>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Clinical Notes</label>
+            <textarea id="f-notes" rows="3" placeholder="Optional: Additional clinical observations, co-morbidities..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">📎 Supporting Documents</div>
+        <div class="upload-area" onclick="document.getElementById('f-file').click()">
+          <div style="font-size:2rem">📁</div>
+          <p>Click to upload or drag & drop<br><span style="font-size:.7rem;color:var(--dark-muted)">PDF, JPG, PNG · Max 10MB · Discharge summary, bills, prescriptions</span></p>
+          <input type="file" id="f-file" style="display:none" accept=".pdf,.jpg,.jpeg,.png"/>
+        </div>
+        <div id="file-name" style="font-size:.75rem;color:var(--muted);margin-top:8px"></div>
+      </div>
+
+      <!-- RISK PRE-CHECK -->
+      <div class="risk-meter" id="risk-meter">
+        <div class="risk-meter-title">🤖 AI Risk Pre-Check — Live Analysis</div>
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-fill" id="risk-bar" style="width:0%;background:var(--green2)"></div>
+        </div>
+        <div class="risk-level" id="risk-level" style="color:var(--muted)">Enter billing amount and diagnosis to see risk</div>
+        <div class="risk-detail" id="risk-detail"></div>
+      </div>
+
+      <div style="margin-top:24px;display:flex;gap:12px">
+        <button class="btn btn-primary" onclick="submitForm()" style="padding:13px 32px;font-size:.9rem">
+          ✅ Submit Record to HealthSensex AI
+        </button>
+        <button class="btn btn-ghost" onclick="clearForm()">🔄 Clear Form</button>
+      </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    <div class="card" id="recent-submissions" style="display:none">
+      <div class="card-title">📨 Recent Submissions This Session</div>
+      <table class="data-table" id="submissions-table">
+        <thead><tr>
+          <th>Time</th><th>Hospital</th><th>Disease</th><th>Billing (₹)</th>
+          <th>AI Score</th><th>Status</th>
+        </tr></thead>
+        <tbody id="submissions-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PAGE 2: FRAUD DASHBOARD ═══════════ -->
+
+<!-- Login Overlay -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div style="font-size:2.5rem;margin-bottom:12px">🔐</div>
+    <h2>RESTRICTED ACCESS</h2>
+    <p>National Health Authority · Fraud Detection Division<br>Authorised personnel only</p>
+    <input type="text" id="login-user" placeholder="Username"/>
+    <input type="password" id="login-pass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <div class="login-error" id="login-error">Invalid credentials. Access denied.</div>
+    <button class="btn btn-primary" style="width:100%;padding:12px;justify-content:center;margin-top:4px" onclick="doLogin()">
+      🔑 Authenticate
+    </button>
+    <p style="font-size:.65rem;color:var(--dark-muted);margin-top:16px">
+      Access logged · All actions are audited · Unauthorised access is a criminal offence under IT Act 2000
+    </p>
+  </div>
+</div>
+
+<div class="page" id="page-fraud">
+  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <h1>🔍 National Fraud Detection System</h1>
+      <p>IsolationForest ML · Real-time Anomaly Detection · NHA Auditor Console</p>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:var(--mono);font-size:.7rem;color:var(--dark-muted)" id="fraud-clock"></div>
+      <div style="font-family:var(--mono);font-size:.7rem;color:#66BB6A;margin-top:2px">● MONITORING ACTIVE</div>
+    </div>
+  </div>
+  <div class="content-area">
+
+    <!-- Alert banner (shown when critical fraud found) -->
+    <div class="alert-banner" id="fraud-alert" style="display:none">
+      🔴 CRITICAL ALERT &nbsp;|&nbsp; <span id="alert-text"></span>
+    </div>
+
+    <!-- KPI row + gauge -->
+    <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;margin-bottom:22px">
+      <div class="card" style="margin-bottom:0">
+        <div class="gauge-wrap">
+          <canvas id="gaugeCanvas" width="180" height="100"></canvas>
+          <div class="gauge-score" id="gauge-score" style="color:#EF5350">—</div>
+          <div class="gauge-label">Integrity Index</div>
+          <div class="gauge-status" id="gauge-status" style="color:var(--red2)">Loading...</div>
+        </div>
+      </div>
+      <div class="kpi-grid" style="margin-bottom:0">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Records</div>
+          <div class="kpi-value" id="kpi-total">—</div>
+          <div class="kpi-sub">Historical + submitted</div>
+        </div>
+        <div class="kpi-card danger">
+          <div class="kpi-label">Flagged</div>
+          <div class="kpi-value" id="kpi-flagged">—</div>
+          <div class="kpi-sub" id="kpi-flagged-pct">— of total</div>
+        </div>
+        <div class="kpi-card warn">
+          <div class="kpi-label">Suspicious Billing</div>
+          <div class="kpi-value" id="kpi-sus-billing">—</div>
+          <div class="kpi-sub">Under investigation</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">New Submissions</div>
+          <div class="kpi-value" id="kpi-submitted">—</div>
+          <div class="kpi-sub" id="kpi-submitted-flagged">— flagged</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="two-col">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">📊 Fraud Flags by Hospital</div>
+        <div class="chart-wrap"><canvas id="hospitalChart"></canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">🥧 Fraud Type Breakdown</div>
+        <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card">
+      <div class="card-title">📈 Monthly Billing Timeline — Total vs Flagged</div>
+      <div class="chart-wrap-tall"><canvas id="timelineChart"></canvas></div>
+    </div>
+
+    <!-- Flagged records table -->
+    <div class="card">
+      <div class="card-title">🚨 Flagged High-Risk Records</div>
+      <div class="filter-row">
+        <select id="filter-hospital" onchange="loadFlagged(1)">
+          <option value="">All Hospitals</option>
+          <option value="HOSP-001">HOSP-001</option><option value="HOSP-002">HOSP-002</option>
+          <option value="HOSP-003">HOSP-003</option><option value="HOSP-004">HOSP-004</option>
+          <option value="HOSP-005">HOSP-005</option><option value="HOSP-006">HOSP-006</option>
+          <option value="HOSP-007">HOSP-007</option><option value="HOSP-008">HOSP-008</option>
+          <option value="HOSP-009">HOSP-009</option><option value="HOSP-010">HOSP-010</option>
+          <option value="HOSP-011">HOSP-011</option><option value="HOSP-012">HOSP-012</option>
+        </select>
+        <select id="filter-disease" onchange="loadFlagged(1)">
+          <option value="">All Diseases</option>
+          <option>Dengue</option><option>Tuberculosis</option><option>Malaria</option>
+          <option>Typhoid</option><option>COVID-19</option><option>Cardiac</option>
+          <option>Orthopedic</option><option>Cancer</option>
+        </select>
+        <select id="filter-sort" onchange="loadFlagged(1)">
+          <option value="anomaly_score">Sort: Risk Score ↓</option>
+          <option value="billing">Sort: Billing ↓</option>
+          <option value="billing_deviation">Sort: Deviation ↓</option>
+          <option value="doctor_daily_dc">Sort: Death Certs ↓</option>
+        </select>
+        <span style="font-size:.75rem;color:var(--dark-muted);margin-left:auto" id="table-count"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr>
+            <th onclick="sortTable('anomaly_score')">Risk Score ↕</th>
+            <th onclick="sortTable('date')">Date</th>
+            <th onclick="sortTable('hospital_id')">Hospital</th>
+            <th onclick="sortTable('doctor_id')">Doctor</th>
+            <th onclick="sortTable('disease')">Disease</th>
+            <th onclick="sortTable('billing')">Billing (₹)</th>
+            <th onclick="sortTable('billing_deviation')">Deviation</th>
+            <th onclick="sortTable('doctor_daily_dc')">DC/Day</th>
+            <th>Flag Reason</th>
+            <th>Action</th>
+          </tr></thead>
+          <tbody id="flagged-body"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="fraud-pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PAGE 3: PUBLIC SENSEX ═══════════ -->
+<div class="page" id="page-public">
+  <div class="public-hero">
+    <div style="display:grid;grid-template-columns:1fr auto;align-items:start;gap:20px">
+      <div>
+        <h1>📊 HealthSensex — India's National Health Index</h1>
+        <p>Tracks disease burden, outbreak risk, hospital load, and health equity across all 36 states & UTs. Updated daily from ABDM data.</p>
+        <div style="margin-top:20px;display:flex;gap:24px">
+          <div>
+            <div style="font-family:var(--mono);font-size:.65rem;color:var(--dark-muted);text-transform:uppercase;letter-spacing:.1em">Public Health Score</div>
+            <div class="big-score" id="public-score" style="color:var(--amber2)">—</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:4px" id="public-status">Loading...</div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:.65rem;color:var(--dark-muted);text-transform:uppercase;letter-spacing:.1em">Fraud Integrity Score</div>
+            <div style="font-family:var(--mono);font-size:2rem;font-weight:600;margin-top:4px" id="public-fraud-score" style="color:var(--red2)">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-area">
+
+    <!-- Disease Trend Cards -->
+    <div class="card">
+      <div class="card-title">🦠 Active Disease Monitor</div>
+      <div class="disease-cards" id="disease-cards">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- Outbreak Warnings -->
+    <div class="card">
+      <div class="card-title">⚠️ AI Outbreak Predictions</div>
+      <div id="outbreak-panels"><!-- filled by JS --></div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="two-col">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">📈 Disease Case Trends (Monthly)</div>
+        <div class="chart-wrap-tall"><canvas id="diseaseTrendChart"></canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">🗺️ State Health Rankings</div>
+        <div style="max-height:300px;overflow-y:auto">
+          <table class="data-table" id="state-table">
+            <thead><tr>
+              <th>#</th><th>State</th><th>Score</th><th>Grade</th>
+            </tr></thead>
+            <tbody id="state-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- end #main -->
+
+<!-- CASE MODAL -->
+<div class="modal-overlay" id="case-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-content"></div>
+    <div style="height:220px;margin-top:16px"><canvas id="caseChart"></canvas></div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+let fraudLoggedIn = false;
+
+function showPage(name) {
+  if (name === 'fraud' && !fraudLoggedIn) {
+    document.getElementById('login-overlay').style.display = 'flex';
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+
+  if (name === 'fraud') loadFraudPage();
+  if (name === 'public') loadPublicPage();
+}
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  if (u === 'NHA_AUDITOR' && p === 'HealthSensex@2026') {
+    fraudLoggedIn = true;
+    document.getElementById('login-overlay').style.display = 'none';
+    showPage('fraud');
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-pass').value = '';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// PAGE 1: ABHA FORM
+// ══════════════════════════════════════════════════
+const ICD_MAP = {
+  'Dengue':'A90','Tuberculosis':'A15','Malaria':'B50','Typhoid':'A01',
+  'COVID-19':'U07.1','Cardiac':'I21','Orthopedic':'M16','Cancer':'C80'
+};
+
+function validateABHA(el) {
+  let v = el.value.replace(/\D/g,'');
+  let fmt = v.match(/.{1,4}/g)?.join('-') || v;
+  el.value = fmt;
+  const clean = v.replace(/-/g,'');
+  const hint = document.getElementById('abha-hint');
+  if (clean.length === 14) {
+    el.classList.add('valid'); el.classList.remove('invalid');
+    hint.className = 'field-valid'; hint.textContent = '✓ Valid ABHA format';
+  } else if (clean.length > 0) {
+    el.classList.add('invalid'); el.classList.remove('valid');
+    hint.className = 'field-error'; hint.textContent = `${14 - clean.length} digits remaining`;
+  } else {
+    el.classList.remove('valid','invalid');
+    hint.className = 'field-hint'; hint.textContent = 'Enter 14-digit ABHA number';
+  }
+}
+
+function formatDoctorId(el) {
+  let v = el.value.toUpperCase().replace(/[^A-Z0-9-]/g,'');
+  if (v.length > 2 && !v.startsWith('DR-')) v = 'DR-' + v.replace('DR','');
+  el.value = v;
+}
+
+function onDiseaseChange() {
+  const disease = document.getElementById('f-disease').value;
+  document.getElementById('f-icd').value = ICD_MAP[disease] || '';
+  updatePrecheck();
+}
+
+function toggleProc(el) { el.classList.toggle('selected'); }
+
+document.getElementById('f-file').onchange = function() {
+  const fn = this.files[0]?.name;
+  if (fn) document.getElementById('file-name').textContent = '📎 ' + fn;
+};
+
+let precheckTimer = null;
+function updatePrecheck() {
+  clearTimeout(precheckTimer);
+  precheckTimer = setTimeout(doPrecheck, 400);
+}
+
+async function doPrecheck() {
+  const billing = document.getElementById('f-billing').value;
+  const disease = document.getElementById('f-disease').value;
+  const dc = document.getElementById('f-dc').value;
+  if (!billing && !disease) return;
+
+  try {
+    const res = await fetch('/api/precheck', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({billing: parseFloat(billing)||0, disease, death_certs: parseInt(dc)||0})
+    });
+    const data = await res.json();
+    const bar = document.getElementById('risk-bar');
+    const lvl = document.getElementById('risk-level');
+    const det = document.getElementById('risk-detail');
+
+    const pct = data.risk==='HIGH'?85 : data.risk==='MEDIUM'?50 : 20;
+    const color = data.risk==='HIGH'?'var(--red2)' : data.risk==='MEDIUM'?'var(--amber2)' : 'var(--green2)';
+    bar.style.width = pct+'%'; bar.style.background = color;
+    lvl.style.color = color;
+    lvl.textContent = data.risk === 'HIGH' ? '⚠️ HIGH RISK — Will likely be flagged' :
+                      data.risk === 'MEDIUM' ? '🟡 MEDIUM RISK — May trigger review' : '✅ LOW RISK';
+    det.textContent = data.detail;
+  } catch(e) {}
+}
+
+async function submitForm() {
+  const abha = document.getElementById('f-abha').value.replace(/-/g,'');
+  const hospital = document.getElementById('f-hospital').value;
+  const doctor = document.getElementById('f-doctor').value;
+  const disease = document.getElementById('f-disease').value;
+  const billing = document.getElementById('f-billing').value;
+  const patient = document.getElementById('f-patient').value;
+
+  if (!abha || abha.length !== 14) return showToast('error','Validation Error','Please enter a valid 14-digit ABHA ID.');
+  if (!hospital) return showToast('error','Validation Error','Please select a hospital.');
+  if (!disease) return showToast('error','Validation Error','Please select a diagnosis.');
+  if (!billing || parseFloat(billing) <= 0) return showToast('error','Validation Error','Please enter a valid billing amount.');
+  if (!doctor) return showToast('error','Validation Error','Please enter a Doctor ID.');
+
+  const payload = {
+    abha_id: abha, hospital_id: hospital, doctor_id: doctor,
+    disease, billing: parseFloat(billing),
+    death_certs: parseInt(document.getElementById('f-dc').value)||0,
+    patient_name: patient,
+    age: document.getElementById('f-age').value,
+    gender: document.getElementById('f-gender').value,
+    icd: document.getElementById('f-icd').value,
+    notes: document.getElementById('f-notes').value
+  };
+
+  try {
+    const res = await fetch('/api/submit', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.error) return showToast('error','Submission Error', data.error);
+
+    const flagged = data.flagged;
+    showToast(flagged ? 'warn' : 'success',
+      flagged ? '⚠️ Record Flagged for Review' : '✅ Record Submitted',
+      `Anomaly Score: ${data.anomaly_score}/100. ${flagged ? 'Reason: '+data.fraud_reason+'. Sent to NHA audit queue.' : 'No anomalies detected.'}`
+    );
+    addToSubmissionsTable(payload, data);
+    clearForm();
+  } catch(e) {
+    showToast('error','Network Error','Could not connect to HealthSensex AI server.');
+  }
+}
+
+function addToSubmissionsTable(payload, result) {
+  document.getElementById('recent-submissions').style.display = 'block';
+  const tbody = document.getElementById('submissions-body');
+  const row = document.createElement('tr');
+  if (result.flagged) row.classList.add('high-risk');
+  row.innerHTML = `
+    <td style="font-family:var(--mono);font-size:.72rem">${new Date().toLocaleTimeString('en-IN')}</td>
+    <td>${payload.hospital_id}</td>
+    <td>${payload.disease}</td>
+    <td style="font-family:var(--mono)">₹${parseFloat(payload.billing).toLocaleString('en-IN')}</td>
+    <td>
+      <span class="score-bar"><span class="score-bar-fill" style="width:${result.anomaly_score}%;background:${result.anomaly_score>70?'var(--red2)':result.anomaly_score>40?'var(--amber2)':'var(--green2)'}"></span></span>
+      <span style="font-family:var(--mono);font-size:.78rem">${result.anomaly_score}</span>
+    </td>
+    <td><span class="badge ${result.flagged?'badge-red':'badge-green'}">${result.flagged?'FLAGGED':'CLEAR'}</span></td>
+  `;
+  tbody.insertBefore(row, tbody.firstChild);
+}
+
+function clearForm() {
+  ['f-abha','f-patient','f-doctor','f-billing','f-notes','f-icd','f-dc'].forEach(id => document.getElementById(id).value='');
+  ['f-hospital','f-disease','f-gender'].forEach(id => document.getElementById(id).selectedIndex=0);
+  document.querySelectorAll('.procedure-tag').forEach(t => t.classList.remove('selected'));
+  document.getElementById('file-name').textContent = '';
+  document.getElementById('risk-bar').style.width = '0%';
+  document.getElementById('risk-level').textContent = 'Enter billing amount and diagnosis to see risk';
+  document.getElementById('risk-detail').textContent = '';
+  document.getElementById('abha-hint').className = 'field-hint';
+  document.getElementById('abha-hint').textContent = 'Enter 14-digit ABHA number';
+}
+
+// ══════════════════════════════════════════════════
+// PAGE 2: FRAUD DASHBOARD
+// ══════════════════════════════════════════════════
+let hospChart, typeChartObj, timelineChartObj, caseChartObj;
+let currentPage = 1, totalPages = 1, currentSort = 'anomaly_score', currentSortDir = 'desc';
+
+function updateClock() {
+  const el = document.getElementById('fraud-clock');
+  if (el) el.textContent = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}) + ' IST';
+}
+setInterval(updateClock, 1000); updateClock();
+
+async function loadFraudPage() {
+  await Promise.all([loadSummary(), loadHospitalChart(), loadTypeChart(), loadTimeline(), loadFlagged(1)]);
+}
+
+async function loadSummary() {
+  try {
+    const res = await fetch('/api/fraud/summary');
+    const d = await res.json();
+    document.getElementById('kpi-total').textContent = d.total_records.toLocaleString('en-IN');
+    document.getElementById('kpi-flagged').textContent = d.flagged_count.toLocaleString('en-IN');
+    document.getElementById('kpi-flagged-pct').textContent = d.flagged_pct + '% of total';
+    document.getElementById('kpi-sus-billing').textContent = '₹' + (d.flagged_billing/1e7).toFixed(2) + ' Cr';
+    document.getElementById('kpi-submitted').textContent = d.submitted_count;
+    document.getElementById('kpi-submitted-flagged').textContent = d.submitted_flagged + ' flagged';
+
+    const idx = d.health_index;
+    document.getElementById('gauge-score').textContent = idx;
+    const color = idx >= 75 ? '#66BB6A' : idx >= 50 ? '#FFB300' : '#EF5350';
+    document.getElementById('gauge-score').style.color = color;
+    const status = idx >= 75 ? 'HEALTHY' : idx >= 50 ? 'MODERATE RISK' : 'HIGH RISK — AUDIT';
+    document.getElementById('gauge-status').textContent = status;
+    document.getElementById('gauge-status').style.color = color;
+    drawGauge(idx, color);
+
+    if (d.flagged_count > 100) {
+      document.getElementById('fraud-alert').style.display = 'flex';
+      document.getElementById('alert-text').textContent =
+        `${d.flagged_count.toLocaleString('en-IN')} anomalous records · ₹${(d.flagged_billing/1e7).toFixed(2)} Cr suspicious billing · HOSP-007 and DR-0042 are primary risk entities`;
+    }
+  } catch(e) { console.error(e); }
+}
+
+function drawGauge(score, color) {
+  const canvas = document.getElementById('gaugeCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,180,100);
+  const cx=90, cy=95, r=75, start=Math.PI, end=0;
+  ctx.beginPath(); ctx.arc(cx,cy,r,start,end);
+  ctx.strokeStyle='rgba(255,255,255,.07)'; ctx.lineWidth=14; ctx.stroke();
+  const scoreAngle = Math.PI + (score/100)*Math.PI;
+  ctx.beginPath(); ctx.arc(cx,cy,r,start,scoreAngle);
+  ctx.strokeStyle=color; ctx.lineWidth=14; ctx.lineCap='round'; ctx.stroke();
+}
+
+async function loadHospitalChart() {
+  try {
+    const res = await fetch('/api/fraud/by_hospital');
+    const data = await res.json();
+    const ctx = document.getElementById('hospitalChart').getContext('2d');
+    if (hospChart) hospChart.destroy();
+    hospChart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: data.map(d=>d.hospital_id),
+        datasets:[{
+          label:'Flagged Records',
+          data: data.map(d=>d.flagged_count),
+          backgroundColor: data.map(d => d.hospital_id==='HOSP-007'?'rgba(239,83,80,.8)':'rgba(21,101,192,.5)'),
+          borderColor: data.map(d => d.hospital_id==='HOSP-007'?'#EF5350':'#1565C0'),
+          borderWidth:1, borderRadius:4
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#546E7A',font:{size:10}},grid:{display:false}},
+                y:{ticks:{color:'#546E7A'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+  } catch(e) {}
+}
+
+async function loadTypeChart() {
+  try {
+    const res = await fetch('/api/fraud/by_type');
+    const data = await res.json();
+    const ctx = document.getElementById('typeChart').getContext('2d');
+    if (typeChartObj) typeChartObj.destroy();
+    typeChartObj = new Chart(ctx, {
+      type:'doughnut',
+      data:{
+        labels: data.map(d=>d.fraud_reason),
+        datasets:[{data: data.map(d=>d.count),
+          backgroundColor:['rgba(239,83,80,.7)','rgba(245,124,0,.7)','rgba(66,165,245,.7)','rgba(102,187,106,.7)'],
+          borderColor:'rgba(255,255,255,.05)', borderWidth:2}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#B0BEC5',font:{size:11}},position:'bottom'}}}
+    });
+  } catch(e) {}
+}
+
+async function loadTimeline() {
+  try {
+    const res = await fetch('/api/fraud/timeline');
+    const data = await res.json();
+    const ctx = document.getElementById('timelineChart').getContext('2d');
+    if (timelineChartObj) timelineChartObj.destroy();
+    timelineChartObj = new Chart(ctx, {
+      type:'line',
+      data:{
+        labels: data.map(d=>d.month),
+        datasets:[
+          {label:'Total Billing',data:data.map(d=>d.total_billing/1e5),
+           borderColor:'#42A5F5',backgroundColor:'rgba(66,165,245,.08)',fill:true,tension:.4,pointRadius:3},
+          {label:'Flagged Billing',data:data.map(d=>d.flagged_billing/1e5),
+           borderColor:'#EF5350',backgroundColor:'rgba(239,83,80,.08)',fill:true,tension:.4,pointRadius:3}
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#B0BEC5'}}},
+        scales:{x:{ticks:{color:'#546E7A'},grid:{color:'rgba(255,255,255,.04)'}},
+                y:{ticks:{color:'#546E7A',callback:v=>'₹'+v+'L'},grid:{color:'rgba(255,255,255,.04)'}}}}
+    });
+  } catch(e) {}
+}
+
+async function loadFlagged(page=1) {
+  currentPage = page;
+  const hospital = document.getElementById('filter-hospital').value;
+  const disease  = document.getElementById('filter-disease').value;
+  const sort     = document.getElementById('filter-sort').value;
+  const params   = new URLSearchParams({page, per_page:30, hospital, disease, sort, dir:'desc'});
+  try {
+    const res = await fetch('/api/fraud/flagged?' + params);
+    const data = await res.json();
+    totalPages = Math.ceil(data.total / 30);
+    document.getElementById('table-count').textContent = `${data.total.toLocaleString('en-IN')} records`;
+    renderFlaggedTable(data.records);
+    renderPagination(data.total, 30, page);
+  } catch(e) {}
+}
+
+function renderFlaggedTable(records) {
+  const tbody = document.getElementById('flagged-body');
+  tbody.innerHTML = '';
+  records.forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.anomaly_score > 80) tr.classList.add('high-risk');
+    else if (r.anomaly_score > 60) tr.classList.add('med-risk');
+    const scoreColor = r.anomaly_score>80?'var(--red2)':r.anomaly_score>60?'var(--amber2)':'var(--amber)';
+    tr.innerHTML = `
+      <td>
+        <span class="score-bar"><span class="score-bar-fill" style="width:${r.anomaly_score}%;background:${scoreColor}"></span></span>
+        <span style="font-family:var(--mono);font-size:.8rem;color:${scoreColor}">${r.anomaly_score}</span>
+      </td>
+      <td style="font-size:.75rem;color:var(--muted)">${r.date}</td>
+      <td><span style="font-family:var(--mono);font-size:.78rem;color:${r.hospital_id==='HOSP-007'?'var(--red2)':'inherit'}">${r.hospital_id}</span></td>
+      <td><span style="font-family:var(--mono);font-size:.78rem;color:${r.doctor_id==='DR-0042'?'var(--red2)':'inherit'}">${r.doctor_id}</span></td>
+      <td><span class="badge badge-blue">${r.disease}</span></td>
+      <td style="font-family:var(--mono);font-size:.8rem">₹${r.billing.toLocaleString('en-IN')}</td>
+      <td style="font-family:var(--mono);color:${r.billing_deviation>5?'var(--red2)':'inherit'}">${r.billing_deviation}×</td>
+      <td style="font-family:var(--mono);color:${r.doctor_daily_dc>10?'var(--red2)':'inherit'}">${r.doctor_daily_dc}</td>
+      <td><span class="badge ${r.fraud_reason.includes('Billing')?'badge-amber':r.fraud_reason.includes('Death')?'badge-red':'badge-blue'}">${r.fraud_reason}</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="openCase('${r.hospital_id}')">Investigate</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderPagination(total, perPage, current) {
+  const pages = Math.ceil(total/perPage);
+  const el = document.getElementById('fraud-pagination');
+  el.innerHTML = '';
+  const addBtn = (label, page, disabled=false, active=false) => {
+    const btn = document.createElement('button');
+    btn.textContent = label; btn.disabled = disabled;
+    if (active) btn.classList.add('active');
+    btn.onclick = () => loadFlagged(page);
+    el.appendChild(btn);
+  };
+  addBtn('‹', current-1, current<=1);
+  const start = Math.max(1, current-2), end = Math.min(pages, current+2);
+  if (start>1) addBtn('1', 1);
+  if (start>2) { const dots=document.createElement('span'); dots.textContent='…'; dots.style.color='var(--dark-muted)'; dots.style.padding='0 4px'; el.appendChild(dots); }
+  for (let i=start; i<=end; i++) addBtn(i, i, false, i===current);
+  if (end<pages-1) { const dots=document.createElement('span'); dots.textContent='…'; dots.style.color='var(--dark-muted)'; dots.style.padding='0 4px'; el.appendChild(dots); }
+  if (end<pages) addBtn(pages, pages);
+  addBtn('›', current+1, current>=pages);
+}
+
+function sortTable(col) {
+  if (document.getElementById('filter-sort')) {
+    document.getElementById('filter-sort').value = col;
+    loadFlagged(1);
+  }
+}
+
+async function openCase(hospitalId) {
+  try {
+    const res = await fetch('/api/fraud/case/' + hospitalId);
+    const d = await res.json();
+    document.getElementById('modal-content').innerHTML = `
+      <h2 style="font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--red2);margin-bottom:6px">
+        🔴 Case Investigation: ${d.hospital_id}
+      </h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0">
+        <div class="kpi-card danger" style="padding:14px">
+          <div class="kpi-label">Flagged Records</div>
+          <div class="kpi-value" style="font-size:1.5rem">${d.flagged_records.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="kpi-card warn" style="padding:14px">
+          <div class="kpi-label">Suspicious Billing</div>
+          <div class="kpi-value" style="font-size:1.3rem">₹${(d.flagged_billing/1e5).toFixed(1)}L</div>
+        </div>
+        <div class="kpi-card" style="padding:14px">
+          <div class="kpi-label">Avg Risk Score</div>
+          <div class="kpi-value" style="font-size:1.5rem">${d.avg_anomaly_score}</div>
+        </div>
+      </div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">
+        <strong style="color:var(--red2)">Top flagged doctor:</strong> ${d.top_flagged_doctor} &nbsp;·&nbsp;
+        <strong style="color:var(--amber2)">Primary fraud type:</strong> ${d.top_flagged_disease}<br>
+        <strong>Recommended action:</strong> Initiate full financial audit, cross-reference with NMC doctor records, and freeze Ayushman Bharat payouts pending investigation.
+      </div>
+      <div style="font-family:var(--display);font-size:.8rem;font-weight:600;letter-spacing:.08em;color:var(--blue-light);margin-bottom:8px">
+        MONTHLY BILLING TREND
+      </div>
+    `;
+    document.getElementById('case-modal').classList.add('open');
+
+    const ctx = document.getElementById('caseChart').getContext('2d');
+    if (caseChartObj) caseChartObj.destroy();
+    caseChartObj = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: d.monthly_trend.map(m=>m.month),
+        datasets:[
+          {label:'Total Billing', data:d.monthly_trend.map(m=>m.total_billing/1000), backgroundColor:'rgba(66,165,245,.4)', borderColor:'#42A5F5', borderWidth:1},
+          {label:'Flagged Billing', data:d.monthly_trend.map(m=>m.flagged_billing/1000), backgroundColor:'rgba(239,83,80,.6)', borderColor:'#EF5350', borderWidth:1}
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#B0BEC5',font:{size:10}}}},
+        scales:{x:{ticks:{color:'#546E7A',font:{size:9}},grid:{display:false}},
+                y:{ticks:{color:'#546E7A',callback:v=>'₹'+v+'K'},grid:{color:'rgba(255,255,255,.05)'}}}}
+    });
+  } catch(e) { console.error(e); }
+}
+
+function closeModal() {
+  document.getElementById('case-modal').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════
+// PAGE 3: PUBLIC SENSEX
+// ══════════════════════════════════════════════════
+let diseaseTrendChartObj;
+
+async function loadPublicPage() {
+  await Promise.all([loadPublicIndex(), loadDiseaseCards(), loadOutbreaks(), loadStateTables(), loadDiseaseTrend()]);
+}
+
+async function loadPublicIndex() {
+  try {
+    const res = await fetch('/api/public/index');
+    const d = await res.json();
+    const score = d.public_health_index;
+    document.getElementById('public-score').textContent = score;
+    const color = score>=70?'var(--green2)':score>=50?'var(--amber2)':'var(--red2)';
+    document.getElementById('public-score').style.color = color;
+    document.getElementById('public-status').textContent =
+      score>=70 ? '✅ India\'s health systems are performing well' :
+      score>=50 ? '⚠️ Moderate health burden — some regions need attention' :
+                  '🔴 Elevated disease burden — action required';
+    document.getElementById('public-fraud-score').textContent = d.fraud_index;
+    document.getElementById('public-fraud-score').style.color =
+      d.fraud_index>=70?'var(--green2)':d.fraud_index>=50?'var(--amber2)':'var(--red2)';
+  } catch(e) {}
+}
+
+async function loadDiseaseCards() {
+  try {
+    const res = await fetch('/api/public/disease_trends');
+    const data = await res.json();
+    const trendMap = {};
+    data.trends.forEach(t => trendMap[t.disease] = t);
+
+    const diseaseInfo = {
+      'Dengue':       {icon:'🦟', detail:'Monsoon season risk. Use repellent, eliminate standing water.'},
+      'Tuberculosis': {icon:'🧫', detail:'Spread via air droplets. Ensure ventilation, complete full antibiotic course.'},
+      'Malaria':      {icon:'🦟', detail:'Mosquito-borne. Use nets and repellent, seek care for fever within 24hrs.'},
+      'Typhoid':      {icon:'🤢', detail:'Contaminated water risk. Drink only purified water, get vaccinated.'},
+      'COVID-19':     {icon:'🦠', detail:'Standard precautions advised. Stay updated on booster doses.'},
+      'Cardiac':      {icon:'❤️', detail:'Lifestyle burden rising. Reduce salt, exercise 30 min daily, quit smoking.'},
+      'Orthopedic':   {icon:'🦴', detail:'Increasing in elderly. Calcium supplements, avoid falls, stay active.'},
+      'Cancer':       {icon:'🎗️', detail:'Early detection saves lives. Schedule routine screenings annually.'}
+    };
+
+    const container = document.getElementById('disease-cards');
+    container.innerHTML = '';
+
+    Object.keys(diseaseInfo).forEach(disease => {
+      const t = trendMap[disease] || {pct_change:0, direction:'stable'};
+      const info = diseaseInfo[disease];
+      const rising = t.pct_change > 10;
+      const falling = t.pct_change < -5;
+      const statusColor = rising?'var(--red2)':falling?'var(--green2)':'var(--amber2)';
+      const statusText = rising?'ELEVATED':falling?'DECLINING':'STABLE';
+      container.innerHTML += `
+        <div class="disease-card">
+          <div class="d-name">${info.icon} ${disease}</div>
+          <div class="d-status" style="color:${statusColor}">${statusText}</div>
+          <div class="d-trend" style="color:${statusColor}">
+            ${t.pct_change > 0 ? '↑' : t.pct_change < 0 ? '↓' : '→'} ${Math.abs(t.pct_change)}% vs last month
+          </div>
+          <div class="d-detail">${info.detail}</div>
+        </div>
+      `;
+    });
+  } catch(e) {}
+}
+
+async function loadOutbreaks() {
+  try {
+    const res = await fetch('/api/public/outbreak_risk');
+    const risks = await res.json();
+    const container = document.getElementById('outbreak-panels');
+    container.innerHTML = '';
+
+    const publicAdvice = {
+      'Dengue':       'Use mosquito repellent, wear full-sleeve clothing at dawn and dusk, and eliminate standing water near your home. Seek medical attention immediately for sudden high fever with severe headache or joint pain.',
+      'Malaria':      'Sleep under insecticide-treated bed nets. Use repellent when outdoors at night. Report to a health centre within 24 hours of fever onset for a rapid malaria test.',
+      'Tuberculosis': 'If you have a cough lasting more than 2 weeks, fever, or unexplained weight loss, visit a government TB centre for a free test. TB is curable — complete the full course of medicines.',
+      'Typhoid':      'Drink only treated, boiled, or bottled water. Wash hands before eating. Avoid street food in high-risk districts. A typhoid vaccine is available at government health centres.',
+      'COVID-19':     'Stay updated on booster vaccination. Wear a mask in crowded spaces if symptomatic. Isolate and test if you develop fever or respiratory symptoms.',
+      'Cardiac':      'Reduce salt and saturated fat intake. Exercise at least 30 minutes daily. Get blood pressure and sugar checked annually. Do not ignore chest pain or breathlessness.',
+      'Orthopedic':   'Ensure adequate calcium and Vitamin D intake. Older adults should do balance exercises to prevent falls. Use proper footwear.',
+      'Cancer':       'Schedule routine cancer screenings. Avoid tobacco in all forms. Report any unusual lumps, bleeding, or persistent sores to a doctor immediately.'
+    };
+    const govAdvice = {
+      'Dengue':       '🔴 Deploy additional vector control teams to flagged districts. Increase dengue rapid test kit supply to PHCs and CHCs. Activate state health emergency protocol if positivity rate exceeds 15%. Coordinate with Municipal Corporations for fogging drives.',
+      'Malaria':      '🔴 Expedite supply of artemisinin-based combination therapy to flagged districts. Deploy mobile health units for active case detection in high-burden blocks. Coordinate with NHM for LLIN distribution.',
+      'Tuberculosis': '🟡 Increase DOTS (Directly Observed Treatment, Short-course) centre availability. Conduct active case finding drives in dense urban clusters. Ensure uninterrupted drug supply chain through NACO.',
+      'Typhoid':      '🟡 Conduct emergency water quality testing in flagged districts. Deploy ORS and antibiotic stockpiles to PHCs. Issue district-level boil-water advisories.',
+      'COVID-19':     '🟢 Maintain standard surveillance at airports and borders. Ensure booster vaccine supply in urban districts. No emergency action required currently.',
+      'Cardiac':      '🟡 Increase availability of cardiac emergency drugs at district hospitals. Launch Ayushman Bharat screening camps for hypertension and diabetes in urban areas.',
+      'Orthopedic':   '🟢 Routine monitoring. Increase physiotherapy availability at district hospitals.',
+      'Cancer':       '🟡 Expedite rollout of mobile cancer screening vans to flagged districts. Ensure PAP smear and mammography availability at district hospitals.'
+    };
+
+    const highRisk = risks.filter(r => r.high_risk).slice(0,3);
+    const shown = highRisk.length > 0 ? highRisk : risks.slice(0,2);
+
+    shown.forEach(r => {
+      const isCritical = r.risk_ratio > 1.5;
+      container.innerHTML += `
+        <div class="outbreak-panel ${isCritical?'critical':''}">
+          <div class="o-head">${isCritical?'🔴':'⚠️'} ${isCritical?'HIGH ALERT':'WATCH'}: ${r.disease} — ${r.at_risk_states.slice(0,3).join(', ')}</div>
+          <div class="o-meta">AI Confidence: ${r.confidence}% · Risk Ratio: ${r.risk_ratio}× baseline · Recent Cases: ${r.recent_cases.toLocaleString('en-IN')}</div>
+          <div class="o-public">
+            <strong style="color:var(--amber2)">👥 Public Advisory:</strong><br>
+            ${publicAdvice[r.disease] || 'Take standard precautions and follow district health authority guidelines.'}
+          </div>
+          <div class="o-gov">
+            <strong>🏛️ Government Advisory:</strong><br>
+            ${govAdvice[r.disease] || 'Increase surveillance and ensure adequate medical supply in affected districts.'}
+          </div>
+        </div>
+      `;
+    });
+  } catch(e) {}
+}
+
+async function loadStateTables() {
+  try {
+    const res = await fetch('/api/public/state_scores');
+    const states = await res.json();
+    const tbody = document.getElementById('state-body');
+    tbody.innerHTML = '';
+    states.sort((a,b)=>b.score-a.score).forEach((s,i) => {
+      const color = s.score>=70?'var(--green2)':s.score>=60?'var(--blue-light)':s.score>=50?'var(--amber2)':'var(--red2)';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-family:var(--mono);font-size:.78rem;color:var(--dark-muted)">${i+1}</td>
+        <td style="font-size:.82rem">${s.state}</td>
+        <td style="font-family:var(--mono);font-size:.9rem;color:${color}">${s.score}</td>
+        <td><span class="badge ${s.grade==='A'?'badge-green':s.grade==='B'?'badge-blue':s.grade==='C'?'badge-amber':'badge-red'}">${s.grade}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {}
+}
+
+async function loadDiseaseTrend() {
+  try {
+    const res = await fetch('/api/public/disease_trends');
+    const data = await res.json();
+    const months = [...new Set(data.monthly.map(m=>m.month))].sort();
+    const diseases = [...new Set(data.monthly.map(m=>m.disease))];
+    const colors = ['#42A5F5','#EF5350','#66BB6A','#FFB300','#AB47BC','#26C6DA','#FF7043','#8D6E63'];
+
+    const datasets = diseases.map((disease, i) => {
+      const monthData = months.map(m => {
+        const rec = data.monthly.find(d => d.disease===disease && d.month===m);
+        return rec ? rec.cases : 0;
+      });
+      return {label:disease, data:monthData, borderColor:colors[i%colors.length],
+              backgroundColor:colors[i%colors.length]+'22', fill:false, tension:.4, pointRadius:2};
+    });
+
+    const ctx = document.getElementById('diseaseTrendChart').getContext('2d');
+    if (diseaseTrendChartObj) diseaseTrendChartObj.destroy();
+    diseaseTrendChartObj = new Chart(ctx, {
+      type:'line',
+      data:{labels:months, datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#B0BEC5',font:{size:10}}}},
+        scales:{x:{ticks:{color:'#546E7A',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}},
+                y:{ticks:{color:'#546E7A'},grid:{color:'rgba(255,255,255,.04)'}}}}
+    });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════
+// TOAST SYSTEM
+// ══════════════════════════════════════════════════
+function showToast(type, title, body) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type==='error'||type==='warn'?'danger':'success'}`;
+  const icons = {success:'✅', error:'❌', warn:'⚠️'};
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type]||'ℹ️'}</div>
+    <div><div class="toast-title">${title}</div><div class="toast-body">${body}</div></div>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(), 300); }, 5000);
+}
+</script>
+</body>
+</html>
